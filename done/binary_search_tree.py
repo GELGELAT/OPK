@@ -21,10 +21,10 @@ def _from_list(list, compare_func):
     if not list:
         return create_tree(compare_func)
     tree = create_tree(compare_func)
-    tree.root = create_node(list[0])
+    tree.root = _create_node(list[0])
     for i in range(len(list[1:])):
         current_node = tree.root
-        comparable = create_node(list[i + 1])
+        comparable = _create_node(list[i + 1])
         while True:
             current_comparable = tree.compare(current_node, comparable)
             if current_comparable == -1:
@@ -69,21 +69,17 @@ def _is_tree_none(tree):
         return False
 
 
-def create_node(data):
+def _create_node(data):
     node = Node()
     node.data = data
-    node.left = None
-    node.right = None
+    node.left, node.right = None, None
     return node
 
 
-def create_tree(compare_func):
+def create_tree(compare_func=_default_compare):
     tree = Tree()
     tree.root = None
-    if compare_func is not None:
-        tree.compare = compare_func
-    else:
-        tree.compare = _default_compare
+    tree.compare = compare_func
     return tree
 
 
@@ -104,11 +100,11 @@ def find(tree, data):
     if _is_tree_none(tree) or tree.root is None:
         return None
     current = tree.root
-    comparable = create_node(data)
+    comparable = _create_node(data)
     while True:
-        if comparable.data == current.data:
-            return data
         current_comparable = tree.compare(current, comparable)
+        if current_comparable == 0:
+            return current.data
         if current_comparable == -1:
             if current.left:
                 current = current.left
@@ -121,14 +117,15 @@ def find(tree, data):
                 break
     return None
 
+
 def insert(tree, data):
     if _is_tree_none(tree) or data is None:
         return None
     if tree.root is None:
-        tree.root = create_node(data)
+        tree.root = _create_node(data)
         return tree
     current = tree.root
-    comparable = create_node(data)
+    comparable = _create_node(data)
     while True:
         current_comparable = tree.compare(current, comparable)
         if current_comparable == -1:
@@ -137,12 +134,14 @@ def insert(tree, data):
                 break
             else:
                 current = current.left
-        else:
+        elif current_comparable == 1:
             if current.right is None:
                 current.right = comparable
                 break
             else:
                 current = current.right
+        else:
+            break
     return tree
 
 
@@ -173,11 +172,11 @@ def delete(tree, data):
         elif tree.root.left is None and tree.root.right is not None:
             tree.root = tree.root.right
         else:
-            replacemant = create_node(_find_min_data_node(tree.root))
+            replacemant = _create_node(_find_min_data_node(tree.root))
             tree.root.data = replacemant.data
         return tree
     current = tree.root
-    comparable = create_node(data)
+    comparable = _create_node(data)
 
     while True:
         if current.left is not None and current.left.data == comparable.data:
@@ -188,7 +187,7 @@ def delete(tree, data):
             elif current.left.left is None and current.left.right is not None:
                 current.left = current.left.left
             else:
-                replacemant = create_node(_find_min_data_node(current.left))
+                replacemant = _create_node(_find_min_data_node(current.left))
                 current.left.data = replacemant.data
             return tree
         if current.right is not None and current.right.data == comparable.data:
@@ -199,7 +198,7 @@ def delete(tree, data):
             elif current.right.left is None and current.right.right is not None:
                 current.right = current.right.right
             else:
-                replacemant = create_node(_find_min_data_node(current.right))
+                replacemant = _create_node(_find_min_data_node(current.right))
                 current.right.data = replacemant.data
             return tree
         current_comparable = tree.compare(current, comparable)
@@ -221,15 +220,19 @@ def foreach(tree, func):
         return None
     if tree.root is None:
         return []
-    node = tree.root
-    stack = [node]
-    while stack:
+
+    result = []
+    stack = []
+    current = tree.root
+
+    while stack or current:
+        while current:
+            stack.append(current)
+            current = current.left
         current = stack.pop()
         current.data = func(current.data)
-        if current.right:
-            stack.append(current.right)
-        if current.left:
-            stack.append(current.left)
+        result.append(current.data)
+        current = current.right
     return tree
 
-print(_preorder_traversal_to_list(delete(_from_list([],None),1)))
+
