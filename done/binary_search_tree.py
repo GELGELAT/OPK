@@ -141,86 +141,79 @@ def insert(tree, data):
             else:
                 current = current.right
         else:
-            break
+            current.data = data
     return tree
 
 
 def _find_min_data_node(node):
+    parent = None
     current = node
-    if current.right.left is None:
-        current_data = current.right.data
-        current.right = None
-        return current_data
-    current = node.right
-    while True:
-        if current.left.left is None:
-            current_data = current.left.data
-            current.left = None
-            return current_data
-        else:
-            current = current.left
+    while current.left:
+        parent = current
+        current = current.left
+    return parent, current
 
 
 def delete(tree, data):
-    if _is_tree_none(tree) or data is None or tree.root is None:
+    if tree is None or tree.root is None or data is None:
         return tree
-    if tree.root.data == data:
-        if tree.root.left is None and tree.root.right is None:
-            tree.root = None
-        elif tree.root.left is not None and tree.root.right is None:
-            tree.root = tree.root.left
-        elif tree.root.left is None and tree.root.right is not None:
-            tree.root = tree.root.right
-        else:
-            replacemant = _create_node(_find_min_data_node(tree.root))
-            tree.root.data = replacemant.data
-        return tree
+
+    parent = None
     current = tree.root
     comparable = _create_node(data)
 
-    while True:
-        if current.left is not None and current.left.data == comparable.data:
-            if current.left.left is None and current.left.right is None:
-                current.left = None
-            elif current.left.left is not None and current.left.right is None:
-                current.left = current.left.left
-            elif current.left.left is None and current.left.right is not None:
-                current.left = current.left.left
-            else:
-                replacemant = _create_node(_find_min_data_node(current.left))
-                current.left.data = replacemant.data
-            return tree
-        if current.right is not None and current.right.data == comparable.data:
-            if current.right.left is None and current.right.right is None:
-                current.right = None
-            elif current.right.left is not None and current.right.right is None:
-                current.right = current.right.left
-            elif current.right.left is None and current.right.right is not None:
-                current.right = current.right.right
-            else:
-                replacemant = _create_node(_find_min_data_node(current.right))
-                current.right.data = replacemant.data
-            return tree
+    while current:
         current_comparable = tree.compare(current, comparable)
+        if current_comparable == 0:
+            break
+        parent = current
         if current_comparable == -1:
-            if current.left is None:
-                break
-            else:
-                current = current.left
+            current = current.left
         else:
-            if current.right is None:
-                break
-            else:
-                current = current.right
+            current = current.right
+    else:
+        return tree
+
+    if current.left is None and current.right is None:
+        if parent is None:
+            tree.root = None
+        elif parent.left is current:
+            parent.left = None
+        else:
+            parent.right = None
+
+    elif current.left is None:
+        if parent is None:
+            tree.root = current.right
+        elif parent.left is current:
+            parent.left = current.right
+        else:
+            parent.right = current.right
+
+    elif current.right is None:
+        if parent is None:
+            tree.root = current.left
+        elif parent.left is current:
+            parent.left = current.left
+        else:
+            parent.right = current.left
+
+    else:
+        min_parent, min_node = _find_min_data_node(current.right)
+        current.data = min_node.data
+
+        if min_parent is None:
+            current.right = None
+        else:
+            min_parent.left = None
+
     return tree
+
 
 
 def foreach(tree, func):
     if _is_tree_none(tree):
         return None
-    if tree.root is None:
-        return []
-
     result = []
     stack = []
     current = tree.root
@@ -235,4 +228,4 @@ def foreach(tree, func):
         current = current.right
     return tree
 
-
+_preorder_traversal_to_list(foreach(_from_list([50, 25, 75, 12, 37, 62, 87, 6, 18, 31, 43, 56, 68, 81, 93],_default_compare), lambda x: print(x)))
